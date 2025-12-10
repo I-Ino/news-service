@@ -8,7 +8,7 @@ class JSON_Parser :
 
     def __init__ (self):
 
-        self.source_path = r"C:\Users\Shiv\news-service\resources\seen_articles.json"
+        self.source_path = CONFIG.source_json_path
         self.destination_path = CONFIG.backup_json_path
         self.last_index = CONFIG.last_index
 
