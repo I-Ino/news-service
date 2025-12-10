@@ -96,8 +96,12 @@ class JSON_Parser :
                 new_data = {}
 
                 # Reverse index of existing URLs to ensure no duplicate entry 
-            existing_url = {entry["Link"] for entry in new_data.values()}
-            """This is so inefficient : O(1) time complexity"""
+            existing_url = {entry["URL"] for entry in new_data.values()}
+            
+
+                # Counter for new articles added:
+            article_counter = 0
+            
 
             for _, article in data.items():
                 
@@ -128,9 +132,13 @@ class JSON_Parser :
                 }
 
                 existing_url.add(link)  # maintain the index
-                article_num = _
+                article_counter += 1
             
-            print(f"Added {article_num} articles in the JSON. \n")
+            if article_counter == 0:
+                print("0 articles found")
+                return
+            
+            print(f"Added {article_counter} articles in the JSON. \n")
 
 
             with open(self.destination_path,"w", encoding="utf-8") as f:
