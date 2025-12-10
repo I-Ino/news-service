@@ -56,7 +56,22 @@ class DB_Handler:
             return
 
         data = self.load_json()
+        all_ids_in_json = set(data.keys())
+
         new_entries_count = 0
+
+        # Fetch all existing ID from MongoDB 
+        existing_id = set(doc["_id"] for doc in self.collection.find({},{"_id":1}))
+
+        # Finding new id
+        new_ids = all_ids_in_json - existing_id
+
+        if not new_ids:
+            message = "Checked for updates. None found. Database is up to date."
+            logging.info(message)
+            print(message)
+            return
+
 
         for uid, entry in data.items():
 
