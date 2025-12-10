@@ -88,8 +88,16 @@ class JSON_Parser :
         with open(self.source_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-                # Empty dict to store new data
-            new_data = {}
+                # Load existing backup JSON
+            if os.path.exists(self.destination_path):
+                with open(self.destination_path, "r", encoding="utf-8") as backup:
+                    new_data = json.load(backup)
+            else:
+                new_data = {}
+
+                # Reverse index of existing URLs to ensure no duplicate entry 
+            existing_url = {entry["Link"] for entry in new_data.values()}
+            """This is so inefficient : O(1) time complexity"""
 
             for _, article in data.items():
                 
@@ -98,10 +106,20 @@ class JSON_Parser :
                     article_type = "Mains Answer Writing"
 
                 if article_type not in self.TYPE_MAP:
-                    raise ValueError(f"Unknown entry found! {article_type}, at {_} Aborting")
-                unique_id = self.UID_Maker(article_type)
+                    raise ValueError(f"Unknown entry found! {article_type}, at {_}. Aborting")
+                
+
+                
                 title = article["Title"]
                 link = article["Link"]
+
+                # Skipping enty if url already present.
+                if link in existing_url:
+                    print(f"Skipping duplicate: {title} at {_}.\n\n")
+                    continue
+
+                    # Checking UID after duplicates are checked
+                unique_id = self.UID_Maker(article_type)
 
                 new_data[unique_id] = {
                     "Type": article_type,
@@ -109,7 +127,10 @@ class JSON_Parser :
                     "URL" : link
                 }
 
-                print(f"Added {_}.\n")
+                existing_url.add(link)  # maintain the index
+                article_num = _
+            
+            print(f"Added {article_num} articles in the JSON. \n")
 
 
             with open(self.destination_path,"w", encoding="utf-8") as f:
