@@ -18,7 +18,8 @@ class JSON_Parser :
             "UPSC Key"        : "uKey",
             "Knowledge Nugget": "knoNugg",
             "Issue at a Glance": "issueGla",
-            "Mains Answer Writing": "mainsAns"
+            "Mains Answer Writing": "mainsAns",
+            "Beyond Trending": "beyTre"
         }
 
         self.VARIABLE_MAP = {
@@ -27,7 +28,8 @@ class JSON_Parser :
             "UPSC Key"        : "upsc_key_seq",
             "Knowledge Nugget": "knowledge_nugget_seq",
             "Issue at a Glance": "issue_glance_seq",
-            "Mains Answer Writing": "mains_answer_weekly_seq"
+            "Mains Answer Writing": "mains_answer_weekly_seq",
+            "Beyond Trending": "beyond_trending_seq"
         }
 
     def variable_update(self, type):
@@ -55,6 +57,8 @@ class JSON_Parser :
                 new_lines.append(f"mains_answer_weekly_seq = {CONFIG.mains_answer_weekly_seq}\n")
             elif line.startswith("current_affair_seq"):
                 new_lines.append(f"current_affair_seq = {CONFIG.current_affair_seq}\n")
+            elif line.startswith("beyond_trending_seq"):
+                new_lines.append(f"beyond_trending_seq = {CONFIG.beyond_trending_seq}\n")
             else:
                 new_lines.append(line)
 
@@ -118,9 +122,10 @@ class JSON_Parser :
                 link = article["Link"]
 
                 # Skipping enty if url already present.
-                if link in existing_url:
-                    print(f"Skipping duplicate: {title} at {_}.\n\n")
-                    continue
+                    # messages look ugly
+                # if link in existing_url:
+                #     print(f"Skipping duplicate: {title} at {_}.\n\n")
+                #     continue
 
                     # Checking UID after duplicates are checked
                 unique_id = self.UID_Maker(article_type)
