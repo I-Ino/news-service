@@ -10,7 +10,6 @@ class JSON_Parser :
 
         self.source_path = CONFIG.source_json_path
         self.destination_path = CONFIG.backup_json_path
-        self.last_index = CONFIG.last_index
 
         self.TYPE_MAP = {
             "General Article" : "genArt",
@@ -122,10 +121,10 @@ class JSON_Parser :
                 link = article["Link"]
 
                 # Skipping enty if url already present.
-                    # messages look ugly
-                # if link in existing_url:
-                #     print(f"Skipping duplicate: {title} at {_}.\n\n")
-                #     continue
+                if link in existing_url:
+                        # messages look ugly
+                    #print(f"Skipping duplicate: {title} at {_}.\n\n")
+                    continue
 
                     # Checking UID after duplicates are checked
                 unique_id = self.UID_Maker(article_type)

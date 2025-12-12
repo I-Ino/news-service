@@ -100,8 +100,9 @@ class DB_Handler:
             return
 
 
-        for uid, entry in data.items():
+        for uid in new_ids():
 
+            entry = data[uid]
             # skip if url is duplicate
             url = entry.get("URL","")
             if self.is_duplicate_url(url):

@@ -62,7 +62,8 @@ class FeedTracker:
         
         # Beyond Trending
         if re.search(r"Beyond Trending", title, re.IGNORECASE):
-            cleaned = re.sub(r"Beyond Trending", title, flags=re.IGNORECASE).strip(" -:|")
+            cleaned = re.sub(r"Beyond Trending", "", title, flags=re.IGNORECASE).strip(" -:|")
+            return "Beyond Trending", cleaned
 
 
         # Anything else
@@ -72,11 +73,11 @@ class FeedTracker:
     def check_feed(self):
 
         feed = feedparser.parse(self.feed_url)
-        new_articles = []
+        new_articles = {}
 
         for entry in feed.entries:
             title = entry.title
-            url = entry.url
+            url = entry.link
             
             # Get Article Type & Cleaned Article Name
             article_type, cleaned_title = self.cleaner(title)
@@ -105,7 +106,7 @@ class FeedTracker:
         
         os.makedirs(os.path.dirname(self.new_json),exist_ok=True)
 
-        with open(self.destination_file, "w", encoding="utf-8") as f:
+        with open(self.new_json, "w", encoding="utf-8") as f:
             json.dump(new_articles, f, indent=4, ensure_ascii=False)
 
         print (f"Saved {len(new_articles)} new unique articles.")
