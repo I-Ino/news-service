@@ -15,8 +15,9 @@ class DB_Handler:
         self.database = self.client[CONFIG.DB_NAME]
         self.collection = self.database[CONFIG.DB_COLLECTION]
 
-        self.source_file_path = CONFIG.backup_json_path
+        self.backup_json_path = CONFIG.backup_json_path
         self.log_file_path = CONFIG.database_log
+        self.source_json_path = CONFIG.source_json_path
 
         logging.basicConfig(
             filename = self.log_file_path,
@@ -56,9 +57,9 @@ class DB_Handler:
 
     def load_json(self):
 
-        if not os.path.exists(self.source_file_path):
+        if not os.path.exists(self.backup_json_path):
             raise FileNotFoundError(f"Backup file not found.")
-        with open(self.source_file_path, 'r', encoding='utf-8') as f:
+        with open(self.backup_json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
         return data
@@ -66,7 +67,7 @@ class DB_Handler:
     def check_for_changes(self):
         # Check is json file has changes
 
-        current_modified = os.path.getmtime(self.source_file_path)
+        current_modified = os.path.getmtime(self.backup_json_path)
         if self.last_modified is None or current_modified != self.last_modified:
             self.last_modified = current_modified
             return True
@@ -141,6 +142,68 @@ class DB_Handler:
             print("Database is up to date.\n")
         else:
             print(f"{new_entries_count} new articles added to the database")
+
+
+    def sync_from_json_and_cleanup(self, json_file_path, user_id):
+        """
+        Inserts new articles from a JSON file into MongoDB and deletes the JSON after processing.
+        Only inserts articles with URLs not already in the database.
+        """
+        if not os.path.exists(json_file_path):
+            print(f"No new articles file found at {json_file_path}. Nothing to sync.")
+            return
+
+        # Load the JSON
+        with open(json_file_path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Error decoding JSON file {json_file_path}. Skipping sync.")
+                return
+
+        if not data:
+            print("No new articles in the JSON file.")
+            return
+
+        # Ensure URL index is up to date
+        self.built_url_index()
+
+        inserted_count = 0
+
+        for uid, entry in data.items():
+            url = entry.get("URL", "")
+            if not url or self.is_duplicate_url(url):
+                logging.info(f"Skipping duplicate or invalid URL for {uid}: {url}")
+                continue
+
+            document = {
+                "_id": uid,
+                "Name": entry.get("Name", ""),
+                "Type": entry.get("Type", ""),
+                "URL": url,
+                "Status": "Not Covered",
+                "Notebook_LM": ""
+            }
+
+            try:
+                self.collection.insert_one(document)
+                inserted_count += 1
+                logging.info(f"{uid} added by {user_id} from JSON file.")
+
+                # Update URL index
+                self.url_index[url] = True
+
+            except errors.DuplicateKeyError:
+                continue
+
+        print(f"Inserted {inserted_count} new articles from JSON file.")
+
+        # Delete JSON after successful sync
+        try:
+            os.remove(json_file_path)
+            print(f"Deleted JSON file: {json_file_path}")
+        except Exception as e:
+            print(f"Failed to delete JSON file: {e}")
 
 
 if __name__ == "__main__":
