@@ -27,6 +27,31 @@ class DB_Handler:
 
         # Track last modified time of json
         self.last_modified = None
+
+        # Reverse index for URL
+        self.url_index = {}
+    
+
+    def built_url_index(self):
+        """
+        Loads all URLs from MongoDB and builds a lookup for O(1) duplicate detection.
+        """
+        cursor = self.collection.find({}, {"URL":1})
+
+        self.url_index={}
+        for doc in cursor:
+            url = doc.get("URL")
+            if url:
+                # Set Membership
+                self.url_index[url] = True
+        
+        return self.url_index
+    
+
+    def is_duplicate_url(self, url: str) -> bool:
+        # O(1) URL duplicate detection using the in-memory dictionary
+
+        return url in self.url_index
     
 
     def load_json(self):
@@ -66,6 +91,8 @@ class DB_Handler:
         # Finding new id
         new_ids = all_ids_in_json - existing_id
 
+        self.built_url_index()
+
         if not new_ids:
             message = "Checked for updates. None found. Database is up to date."
             logging.info(message)
@@ -75,23 +102,35 @@ class DB_Handler:
 
         for uid, entry in data.items():
 
-            # default
+            # skip if url is duplicate
+            url = entry.get("URL","")
+            if self.is_duplicate_url(url):
+                logging.info(f"Duplicate URL skiped for {uid}: {url}")
+                continue
+
+
+            # Prepare db entry only if not duplicate
             document = {
                 "_id": uid,
                 "Name": entry.get("Name",""),
                 "Type": entry.get("Type",""),
-                "URL": entry.get("URL",""),
+                "URL": url,
                 "Status": "Not Covered",
                 "Notebook_LM": ""
-            }       
+            }    
+               
 
             try:
-                # Insert the document, ignore if duplicate key exists
+                # Insert the document
                 
                 self.collection.insert_one(document)
                 new_entries_count +=1
                 log_message = f"{uid} added by {user_id}."
                 logging.info(log_message)
+
+                # update url-index
+                if url:
+                    self.url_index[url] = True
             
             except errors.DuplicateKeyError:
                 #Skip duplicate article
