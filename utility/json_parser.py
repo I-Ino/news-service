@@ -117,8 +117,8 @@ class JSON_Parser :
                 
 
                 
-                title = article["Title"]
-                link = article["Link"]
+                title = article["Name"]
+                link = article["URL"]
 
                 # Skipping enty if url already present.
                 if link in existing_url:
