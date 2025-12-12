@@ -101,7 +101,7 @@ class DB_Handler:
             return
 
 
-        for uid in new_ids():
+        for uid in new_ids:
 
             entry = data[uid]
             # skip if url is duplicate
@@ -144,21 +144,21 @@ class DB_Handler:
             print(f"{new_entries_count} new articles added to the database")
 
 
-    def sync_from_json_and_cleanup(self, json_file_path, user_id):
+    def sync_from_json_and_cleanup(self, user_id):
         """
         Inserts new articles from a JSON file into MongoDB and deletes the JSON after processing.
         Only inserts articles with URLs not already in the database.
         """
-        if not os.path.exists(json_file_path):
-            print(f"No new articles file found at {json_file_path}. Nothing to sync.")
+        if not os.path.exists(self.source_json_path):
+            print(f"No new articles file found at {self.source_json_path}. Nothing to sync.")
             return
 
         # Load the JSON
-        with open(json_file_path, "r", encoding="utf-8") as f:
+        with open(self.source_json_path, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)
             except json.JSONDecodeError:
-                print(f"Error decoding JSON file {json_file_path}. Skipping sync.")
+                print(f"Error decoding JSON file {self.source_json_path}. Skipping sync.")
                 return
 
         if not data:
@@ -200,8 +200,8 @@ class DB_Handler:
 
         # Delete JSON after successful sync
         try:
-            os.remove(json_file_path)
-            print(f"Deleted JSON file: {json_file_path}")
+            os.remove(self.source_json_path)
+            print(f"Deleted JSON file: {self.source_json_path}")
         except Exception as e:
             print(f"Failed to delete JSON file: {e}")
 
