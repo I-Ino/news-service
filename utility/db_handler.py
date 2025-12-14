@@ -1,8 +1,6 @@
 import json
 import os
-import subprocess
 import logging
-from datetime import datetime, timezone
 from pymongo import MongoClient, errors
 
 import config as CONFIG
@@ -74,14 +72,22 @@ class DB_Handler:
 
         return False
 
-    def sync_db(self, user_id):
+    def sync_db(self, user_id, json_file_path = None):
         # Sync backup_json with DB, Inserts only new entries based on the unique id.
-        
-        if not self.check_for_changes():
-            print("Database is up to date. \n")
-            return
 
-        data = self.load_json()
+        # use provided path or fall back
+        json_file_path = json_file_path or self.backup_json_path
+
+        if not os.path.exists(json_file_path):
+            print(f"JSON file not found: {json_file_path}")
+            return
+        
+        if json_file_path == self.backup_json_path:
+            if not self.check_for_changes():
+                print("Database is up to date. \n")
+                return
+
+        data = self.load_json() if json_file_path == self.backup_json_path else json.load(open(json_file_path, "r", encoding="utf-8"))
         all_ids_in_json = set(data.keys())
 
         new_entries_count = 0
@@ -143,6 +149,13 @@ class DB_Handler:
         else:
             print(f"{new_entries_count} new articles added to the database")
 
+        # Delete JSON
+        try:
+            os.remove(json_file_path)
+            print(f"Deleted JSON file: {json_file_path}")
+        except Exception as e:
+            print(f"Failed to delete JSON file: {e}")
+
 
     def sync_from_json_and_cleanup(self, user_id):
         """
@@ -199,14 +212,10 @@ class DB_Handler:
         print(f"Inserted {inserted_count} new articles from JSON file.")
 
         # Delete JSON after successful sync
-        try:
-            os.remove(self.source_json_path)
-            print(f"Deleted JSON file: {self.source_json_path}")
-        except Exception as e:
-            print(f"Failed to delete JSON file: {e}")
+        
 
 
 if __name__ == "__main__":
     db_handler = DB_Handler()
-    db_handler.sync_db(user_id=CONFIG.user_id)
+    db_handler.sync_db(user_id=CONFIG.user_id, json_file_path=CONFIG.source_json_path)
 
