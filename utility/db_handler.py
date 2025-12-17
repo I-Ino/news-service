@@ -101,7 +101,7 @@ class DB_Handler:
             return
 
 
-        for uid in new_ids():
+        for uid in new_ids:
 
             entry = data[uid]
             # skip if url is duplicate
