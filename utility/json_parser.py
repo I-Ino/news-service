@@ -19,7 +19,8 @@ class JSON_Parser :
             "Issue at a Glance": "issueGla",
             "Mains Answer Writing": "mainsAns",
             "Beyond Trending": "beyTre",
-            "World This Week": "worWeek"
+            "UPSC Interview Special": "interview",
+            "The world this week": "worldWeek"
         }
 
         self.VARIABLE_MAP = {
@@ -30,13 +31,28 @@ class JSON_Parser :
             "Issue at a Glance": "issue_glance_seq",
             "Mains Answer Writing": "mains_answer_weekly_seq",
             "Beyond Trending": "beyond_trending_seq",
-            "World This Week": "world_this_week_seq"
+            "UPSC Interview Special": "interview_seq",
+            "The world this week": "world_this_week_seq"
         }
 
     def variable_update(self, type):
         var_name = self.VARIABLE_MAP[type]
         current = getattr(CONFIG, var_name)
         setattr(CONFIG, var_name, current + 1)
+
+    def normalize_type(self, article_type, title):
+        if "UPSC Interview Special" in title:
+            return "UPSC Interview Special"
+        if title.lower().startswith("the world this week"):
+            return "The world this week"
+        return article_type
+
+
+    def clean_title(self, title):
+        title = re.sub(r"\s*\|\s*.*$", "", title)   # remove text after "|"
+        title = re.sub(r"\s*:\s*", " - ", title)    # normalize colon
+        return title.strip()
+
         
     def save_config(self):
         path = CONFIG.__file__
@@ -60,6 +76,8 @@ class JSON_Parser :
                 new_lines.append(f"current_affair_seq = {CONFIG.current_affair_seq}\n")
             elif line.startswith("beyond_trending_seq"):
                 new_lines.append(f"beyond_trending_seq = {CONFIG.beyond_trending_seq}\n")
+            elif line.startswith("interview_seq"):
+                new_lines.append(f"interview_seq = {CONFIG.interview_seq}\n")
             elif line.startswith("world_this_week_seq"):
                 new_lines.append(f"world_this_week_seq = {CONFIG.world_this_week_seq}\n")
             else:
@@ -120,10 +138,8 @@ class JSON_Parser :
 
             for _, article in data.items():
                 
-                article_type = article["Type"]
-                cleaned_title = None
-
-                if article_type.startswith("Mains Answer Writing") or re.search(r"(UPSC Essentials. *Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", article_type, re.IGNORECASE):
+                article_type = self.normalize_type(article["Type"], article["Name"])
+                if article_type.startswith("Mains Answer Writing"):
                     article_type = "Mains Answer Writing"
                     week_num, cleaned_title = self.mains_answer_processor(article["Name"])
 
@@ -132,7 +148,7 @@ class JSON_Parser :
                 
 
                 
-                title = cleaned_title if article_type == "Mains Answer Writing" and cleaned_title else article["Name"]
+                title = self.clean_title(article["Name"])
                 link = article["URL"]
 
                 # Skipping enty if url already present.
