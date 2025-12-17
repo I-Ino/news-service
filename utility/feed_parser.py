@@ -52,7 +52,9 @@ class FeedTracker:
             week_match = re.search(r"Week (\d+)", title, re.IGNORECASE)
             week_num = week_match.group(1) if week_match else "X"
             cleaned = re.sub(r"(UPSC Essentials.*Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", "", title, flags=re.IGNORECASE).strip(" -:|")
-            return f"Mains Answer Writing - Week {week_num}", cleaned
+            # Remove leading em dash only if present
+            cleaned = re.sub(r"^[\u2014\-]\s*", "", cleaned)
+            return f"Mains Answer Writing", cleaned
         
         # Current Affair Pointers (titles containing "Current Affairs Pointers")
         if re.search(r"Current Affairs Pointers", title, re.IGNORECASE):

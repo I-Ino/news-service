@@ -18,7 +18,8 @@ class JSON_Parser :
             "Knowledge Nugget": "knoNugg",
             "Issue at a Glance": "issueGla",
             "Mains Answer Writing": "mainsAns",
-            "Beyond Trending": "beyTre"
+            "Beyond Trending": "beyTre",
+            "World This Week": "worWeek"
         }
 
         self.VARIABLE_MAP = {
@@ -28,7 +29,8 @@ class JSON_Parser :
             "Knowledge Nugget": "knowledge_nugget_seq",
             "Issue at a Glance": "issue_glance_seq",
             "Mains Answer Writing": "mains_answer_weekly_seq",
-            "Beyond Trending": "beyond_trending_seq"
+            "Beyond Trending": "beyond_trending_seq",
+            "World This Week": "world_this_week_seq"
         }
 
     def variable_update(self, type):
@@ -58,12 +60,22 @@ class JSON_Parser :
                 new_lines.append(f"current_affair_seq = {CONFIG.current_affair_seq}\n")
             elif line.startswith("beyond_trending_seq"):
                 new_lines.append(f"beyond_trending_seq = {CONFIG.beyond_trending_seq}\n")
+            elif line.startswith("world_this_week_seq"):
+                new_lines.append(f"world_this_week_seq = {CONFIG.world_this_week_seq}\n")
             else:
                 new_lines.append(line)
 
         with open(path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
 
+
+    def mains_answer_processor(self, raw_title):
+        week_match = re.search("Week (\d+)", raw_title, re.IGNORECASE)
+        week_num = week_match.group(1) if week_match else "-"
+        cleaned = re.sub(r"(UPSC Essentials.*Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", "", raw_title, flags=re.IGNORECASE).strip(" -:|")
+        # Remove leading em dash or hyphen ONLY at start
+        cleaned = re.sub(r"^[\u2014\-]\s*", "", cleaned)
+        return week_num, cleaned
         
 
             
@@ -109,15 +121,18 @@ class JSON_Parser :
             for _, article in data.items():
                 
                 article_type = article["Type"]
-                if article_type.startswith("Mains Answer Writing"):
+                cleaned_title = None
+
+                if article_type.startswith("Mains Answer Writing") or re.search(r"(UPSC Essentials. *Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", article_type, re.IGNORECASE):
                     article_type = "Mains Answer Writing"
+                    week_num, cleaned_title = self.mains_answer_processor(article["Name"])
 
                 if article_type not in self.TYPE_MAP:
                     raise ValueError(f"Unknown entry found! {article_type}, at {_}. Aborting")
                 
 
                 
-                title = article["Name"]
+                title = cleaned_title if article_type == "Mains Answer Writing" and cleaned_title else article["Name"]
                 link = article["URL"]
 
                 # Skipping enty if url already present.
