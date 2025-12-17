@@ -40,6 +40,9 @@ class JSON_Parser :
         current = getattr(CONFIG, var_name)
         setattr(CONFIG, var_name, current + 1)
 
+    def should_skip(self, title):
+        return "upsc weekly current affairs quiz" in title.lower()
+
     def normalize_type(self, article_type, title):
         if "UPSC Interview Special" in title:
             return "UPSC Interview Special"
@@ -137,7 +140,8 @@ class JSON_Parser :
             
 
             for _, article in data.items():
-                
+                if self.should_skip(article["Name"]):
+                    continue
                 article_type = self.normalize_type(article["Type"], article["Name"])
                 if article_type.startswith("Mains Answer Writing"):
                     article_type = "Mains Answer Writing"

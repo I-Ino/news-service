@@ -214,6 +214,36 @@ class DB_Handler:
         # Delete JSON after successful sync
         
 
+    
+    def update_notebook_lm_link(self, url:str, NotebookLink: str, user_id: str):
+        # Adds Notebook LM into the database
+
+        if not url or not NotebookLink:
+            raise ValueError("URL and Notebook Link are required.")
+        
+        result = self.collection.update_one(
+            {"URL": url},
+            {
+                "$set":{
+                    "Notebook_LM": NotebookLink
+                }
+            }
+        )
+
+        if result.matched_count == 0:
+            logging.warning(f"No article found for URL: {url}")
+            print("No matching article found. Notebook LM link not updated.")
+            return
+
+        if result.modified_count == 1:
+            logging.info(f"Notebook LM updated by {user_id} for URL: {url}")
+            print("Notebook LM link updated successfully.")
+        else:
+            print("Notebook LM link already up to date.")
+
+
+
+
 
 if __name__ == "__main__":
     db_handler = DB_Handler()
