@@ -166,7 +166,7 @@ class JSON_Parser :
             
             if article_counter == 0:
                 print("0 articles found")
-                return
+                return 0
             
             print(f"Added {article_counter} articles in the JSON. \n")
 
@@ -175,6 +175,8 @@ class JSON_Parser :
                 json.dump(new_data, f, indent=4, ensure_ascii=False)
                 
             self.save_config()
+        
+        return article_counter
                 
 if __name__=="__main__":
     jsonParser = JSON_Parser()

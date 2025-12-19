@@ -102,7 +102,7 @@ class FeedTracker:
         
         if not new_articles:
             print("No new articles found")
-            return
+            return 0
         
         os.makedirs(os.path.dirname(self.new_json),exist_ok=True)
 
@@ -110,6 +110,7 @@ class FeedTracker:
             json.dump(new_articles, f, indent=4, ensure_ascii=False)
 
         print (f"Saved {len(new_articles)} new unique articles.")
+        return len(new_articles)
         
 
 if __name__ == "__main__":

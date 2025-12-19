@@ -79,7 +79,7 @@ class DB_Handler:
         
         if not self.check_for_changes():
             print("Database is up to date. \n")
-            return
+            return 0
 
         data = self.load_json()
         all_ids_in_json = set(data.keys())
@@ -98,7 +98,7 @@ class DB_Handler:
             message = "Checked for updates. None found. Database is up to date."
             logging.info(message)
             print(message)
-            return
+            return 0
 
 
         for uid in new_ids:
@@ -142,6 +142,8 @@ class DB_Handler:
             print("Database is up to date.\n")
         else:
             print(f"{new_entries_count} new articles added to the database")
+        
+        return new_entries_count
 
 
     def sync_from_json_and_cleanup(self, json_file_path, user_id):
