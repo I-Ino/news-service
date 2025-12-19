@@ -6,7 +6,7 @@ import re
 
 
 import config as CONFIG
-from db_handler import DB_Handler
+from utility.db_handler import DB_Handler
 
 
 class FeedTracker:
