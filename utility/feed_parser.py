@@ -48,10 +48,8 @@ class FeedTracker:
             return "Knowledge Nugget", cleaned
 
         # Mains Answer Writing Practice
-        if re.search(r"(UPSC Essentials.*Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", title, re.IGNORECASE):
-            week_match = re.search(r"Week (\d+)", title, re.IGNORECASE)
-            week_num = week_match.group(1) if week_match else "X"
-            cleaned = re.sub(r"(UPSC Essentials.*Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", "", title, flags=re.IGNORECASE).strip(" -:|")
+        if re.search(r"UPSC.*Mains Answer.*Practice", title, re.IGNORECASE):
+            cleaned = re.sub(r"UPSC.*Mains Answer.*Practice", "", title, flags=re.IGNORECASE).strip(" -:|")
             # Remove leading em dash only if present
             cleaned = re.sub(r"^[\u2014\-]\s*", "", cleaned)
             return f"Mains Answer Writing", cleaned

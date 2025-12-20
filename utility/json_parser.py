@@ -99,11 +99,16 @@ class JSON_Parser :
 
 
     def mains_answer_processor(self, raw_title):
+        
         week_match = re.search("Week (\d+)", raw_title, re.IGNORECASE)
         week_num = week_match.group(1) if week_match else "-"
-        cleaned = re.sub(r"(UPSC Essentials.*Mains Answer.*Practice|UPSC Essentials Mains Answer Practice)", "", raw_title, flags=re.IGNORECASE).strip(" -:|")
+        cleaned = re.sub(r".*Mains Answer.*Practice", "", raw_title, flags=re.IGNORECASE).strip(" -:|")
+        # Remove duplicate Week number
+        cleaned = re.sub(r"-?\s*Week\s*\d+", "", cleaned, flags=re.IGNORECASE)
         # Remove leading em dash or hyphen ONLY at start
         cleaned = re.sub(r"^[\u2014\-]\s*", "", cleaned)
+        cleaned = cleaned.strip("-:|")
+
         return week_num, cleaned
         
 
@@ -159,8 +164,10 @@ class JSON_Parser :
                     raise ValueError(f"Unknown entry found! {article_type}, at {_}. Aborting")
                 
 
-                
-                title = self.clean_title(article["Name"], article_type)
+                if article_type == "Mains Answer Writing":
+                    title = f"(Week {week_num}) - {cleaned_title}"
+                else:
+                    title = self.clean_title(article["Name"], article_type)
                 link = article["URL"]
 
                 # Skipping enty if url already present.
