@@ -51,9 +51,17 @@ class JSON_Parser :
         return article_type
 
 
-    def clean_title(self, title):
-        title = re.sub(r"\s*\|\s*.*$", "", title)   # remove text after "|"
-        title = re.sub(r"\s*:\s*", " - ", title)    # normalize colon
+    def clean_title(self, title, article_type):
+
+        title = re.sub(r"\s*\|\s*", " - ", title)
+        # Normalize colon
+        title = re.sub(r"\s*:\s*", " - ", title)
+
+        if article_type == "The world this week":
+            prefix = "the world this week -"
+            if title.lower().startswith(prefix):
+                title=title[len(prefix):]
+        
         return title.strip()
 
         
@@ -152,7 +160,7 @@ class JSON_Parser :
                 
 
                 
-                title = self.clean_title(article["Name"])
+                title = self.clean_title(article["Name"], article_type)
                 link = article["URL"]
 
                 # Skipping enty if url already present.
