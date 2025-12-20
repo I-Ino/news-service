@@ -85,7 +85,7 @@ class DB_Handler:
         if json_file_path == self.backup_json_path:
             if not self.check_for_changes():
                 print("Database is up to date. \n")
-                return
+                return 0
 
         data = self.load_json() if json_file_path == self.backup_json_path else json.load(open(json_file_path, "r", encoding="utf-8"))
         all_ids_in_json = set(data.keys())
@@ -104,7 +104,7 @@ class DB_Handler:
             message = "Checked for updates. None found. Database is up to date."
             logging.info(message)
             print(message)
-            return
+            return 0
 
 
         for uid in new_ids:
@@ -148,6 +148,8 @@ class DB_Handler:
             print("Database is up to date.\n")
         else:
             print(f"{new_entries_count} new articles added to the database")
+        
+        return new_entries_count
 
         # Delete JSON
         try:
