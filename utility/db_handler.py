@@ -15,7 +15,6 @@ class DB_Handler:
 
         self.backup_json_path = CONFIG.backup_json_path
         self.log_file_path = CONFIG.database_log
-        self.source_json_path = CONFIG.source_json_path
 
         logging.basicConfig(
             filename = self.log_file_path,
@@ -72,22 +71,19 @@ class DB_Handler:
 
         return False
 
-    def sync_db(self, user_id, json_file_path = None):
-        # Sync backup_json with DB, Inserts only new entries based on the unique id.
+    def sync_db(self, user_id):
+        # Inserts only new entries based on the unique id. Syncs db with backup json
 
-        # use provided path or fall back
-        json_file_path = json_file_path or self.backup_json_path
-
-        if not os.path.exists(json_file_path):
-            print(f"JSON file not found: {json_file_path}")
-            return
+        if not os.path.exists(self.backup_json_path):
+            print(f"JSON file not found: {self.backup_json_path}")
+            return 0
         
-        if json_file_path == self.backup_json_path:
-            if not self.check_for_changes():
-                print("Database is up to date. \n")
-                return 0
+        
+        if not self.check_for_changes():
+            print("Database is up to date. \n")
+            return 0
 
-        data = self.load_json() if json_file_path == self.backup_json_path else json.load(open(json_file_path, "r", encoding="utf-8"))
+        data = self.load_json() 
         all_ids_in_json = set(data.keys())
 
         new_entries_count = 0
@@ -146,75 +142,10 @@ class DB_Handler:
         
         if new_entries_count == 0:
             print("Database is up to date.\n")
+            return 0
         else:
             print(f"{new_entries_count} new articles added to the database")
-        
-        return new_entries_count
-
-        # Delete JSON
-        try:
-            os.remove(json_file_path)
-            print(f"Deleted JSON file: {json_file_path}")
-        except Exception as e:
-            print(f"Failed to delete JSON file: {e}")
-
-
-    def sync_from_json_and_cleanup(self, user_id):
-        """
-        Inserts new articles from a JSON file into MongoDB and deletes the JSON after processing.
-        Only inserts articles with URLs not already in the database.
-        """
-        if not os.path.exists(self.source_json_path):
-            print(f"No new articles file found at {self.source_json_path}. Nothing to sync.")
-            return
-
-        # Load the JSON
-        with open(self.source_json_path, "r", encoding="utf-8") as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                print(f"Error decoding JSON file {self.source_json_path}. Skipping sync.")
-                return
-
-        if not data:
-            print("No new articles in the JSON file.")
-            return
-
-        # Ensure URL index is up to date
-        self.built_url_index()
-
-        inserted_count = 0
-
-        for uid, entry in data.items():
-            url = entry.get("URL", "")
-            if not url or self.is_duplicate_url(url):
-                logging.info(f"Skipping duplicate or invalid URL for {uid}: {url}")
-                continue
-
-            document = {
-                "_id": uid,
-                "Name": entry.get("Name", ""),
-                "Type": entry.get("Type", ""),
-                "URL": url,
-                "Status": "Not Covered",
-                "Notebook_LM": ""
-            }
-
-            try:
-                self.collection.insert_one(document)
-                inserted_count += 1
-                logging.info(f"{uid} added by {user_id} from JSON file.")
-
-                # Update URL index
-                self.url_index[url] = True
-
-            except errors.DuplicateKeyError:
-                continue
-
-        print(f"Inserted {inserted_count} new articles from JSON file.")
-
-        # Delete JSON after successful sync
-        
+            return new_entries_count
 
     
     def update_notebook_lm_link(self, url:str, NotebookLink: str, user_id: str):
@@ -249,5 +180,5 @@ class DB_Handler:
 
 if __name__ == "__main__":
     db_handler = DB_Handler()
-    db_handler.sync_db(user_id=CONFIG.user_id, json_file_path=CONFIG.source_json_path)
+    db_handler.sync_db(user_id=CONFIG.user_id)
 
