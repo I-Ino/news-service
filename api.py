@@ -8,6 +8,8 @@ import logging
 from utility.feed_parser import FeedTracker
 from utility.json_parser import JSON_Parser
 from utility.db_handler import DB_Handler
+from utility.commit_maker import CommitMaker
+
 
 import config as CONFIG
 
@@ -35,6 +37,7 @@ class NewsService:
         self.feed_tracker = FeedTracker()
         self.json_parser = JSON_Parser()
         self.db_handler = DB_Handler()
+        self.commit_maker = CommitMaker()
 
         self.pipline_runnig = False
 
@@ -109,6 +112,11 @@ class NewsService:
                 response["feed_new_articles"] = feed_count
                 response["json_new_articles"] = json_count or 0
                 response["db_new_articles"] = db_count or 0
+
+                commits = self.commit_maker.commit_if_needed()
+                if commits:
+                    self.logger.info("Changes committed.")
+                    
 
                 self.logger.info(("Pipeline completed successfully"))
 
