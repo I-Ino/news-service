@@ -43,7 +43,11 @@ class JSONChangeDetector:
             return set()
         with open(self.json_path, "r", encoding="utf-8") as f:
             data: Dict = json.load(f)
-        return set(data.keys)
+
+            if not isinstance(data, dict):
+                raise ValueError("Expected dict from JSON backup")
+
+        return set(data.keys())
     
     def detect_new_ids(self) -> Set[str]:
         current_ids = self._load_ids()
